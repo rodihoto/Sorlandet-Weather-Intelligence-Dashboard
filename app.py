@@ -115,7 +115,9 @@ for city in cities:
     if df is None or df.empty:
         st.warning(f"Ingen prognosedata for **{city}** i perioden.")
         continue
-    df["city"] = geo["name"]
+   df["city"] = geo["name"]
+    df["lat"] = geo["lat"]      
+    df["lon"] = geo["lon"]     
     rows.append(df)
 
 if not rows:
@@ -152,20 +154,15 @@ if show_wind and "wind_max" in data.columns:
 # ─────────────────────────────────────────────
 st.subheader("📍 Interaktivt kart – temperatur, nedbør og vind")
 
-# Lage datasett for kart
 map_df = data.copy()
 
 # Hvis nedbør ikke valgt, sett nedbør = 0 for kartet
 if "precip_mm" not in map_df.columns:
-    map_df["precip_mm"] = 0
+    map_df["precip_mm"] = 0.0
 
 # Hvis vind ikke valgt, sett vind = 0
 if "wind_max" not in map_df.columns:
-    map_df["wind_max"] = 0
-
-# Legg til koordinater fra geo_cache
-map_df["lat"] = map_df["city"].apply(lambda c: geo_cache[c]["lat"])
-map_df["lon"] = map_df["city"].apply(lambda c: geo_cache[c]["lon"])
+    map_df["wind_max"] = 0.0
 
 # Bruke siste dato i perioden (den ferskeste prognosen)
 latest = map_df["date"].max()
@@ -184,7 +181,7 @@ fig_map = px.scatter_mapbox(
         "precip_mm": True,
         "wind_max": True,
         "lat": False,
-        "lon": False
+        "lon": False,
     },
     color_continuous_scale="Turbo",
     size_max=25,
@@ -194,10 +191,11 @@ fig_map = px.scatter_mapbox(
 
 fig_map.update_layout(
     mapbox_style="open-street-map",
-    margin={"r":0, "t":0, "l":0, "b":0},
+    margin={"r": 0, "t": 0, "l": 0, "b": 0},
 )
 
 st.plotly_chart(fig_map, use_container_width=True)
+
 
 # Tabell
 st.subheader("Tabell – daglige verdier")

@@ -147,6 +147,57 @@ if show_wind and "wind_max" in data.columns:
     fig_w = px.line(data, x="date", y="wind_max", color="city", markers=True,
                     labels={"date": "Dato", "wind_max": "Vind maks (m/s)", "city": "By"})
     st.plotly_chart(fig_w, use_container_width=True)
+# ─────────────────────────────────────────────
+# 🌍 Interaktivt kart – Plotly Mapbox
+# ─────────────────────────────────────────────
+st.subheader("📍 Interaktivt kart – temperatur, nedbør og vind")
+
+# Lage datasett for kart
+map_df = data.copy()
+
+# Hvis nedbør ikke valgt, sett nedbør = 0 for kartet
+if "precip_mm" not in map_df.columns:
+    map_df["precip_mm"] = 0
+
+# Hvis vind ikke valgt, sett vind = 0
+if "wind_max" not in map_df.columns:
+    map_df["wind_max"] = 0
+
+# Legg til koordinater fra geo_cache
+map_df["lat"] = map_df["city"].apply(lambda c: geo_cache[c]["lat"])
+map_df["lon"] = map_df["city"].apply(lambda c: geo_cache[c]["lon"])
+
+# Bruke siste dato i perioden (den ferskeste prognosen)
+latest = map_df["date"].max()
+latest_df = map_df[map_df["date"] == latest]
+
+fig_map = px.scatter_mapbox(
+    latest_df,
+    lat="lat",
+    lon="lon",
+    color="tmax",
+    size="precip_mm",
+    hover_name="city",
+    hover_data={
+        "tmax": True,
+        "tmin": True,
+        "precip_mm": True,
+        "wind_max": True,
+        "lat": False,
+        "lon": False
+    },
+    color_continuous_scale="Turbo",
+    size_max=25,
+    zoom=5,
+    height=500,
+)
+
+fig_map.update_layout(
+    mapbox_style="open-street-map",
+    margin={"r":0, "t":0, "l":0, "b":0},
+)
+
+st.plotly_chart(fig_map, use_container_width=True)
 
 # Tabell
 st.subheader("Tabell – daglige verdier")

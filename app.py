@@ -294,4 +294,49 @@ fig_map = px.scatter_mapbox(
 )
 
 # Fast punktstørrelse slik at de alltid er synlige
-fig_map.update_traces(mar
+fig_map.update_traces(marker=dict(size=18))
+
+fig_map.update_layout(
+    mapbox_style="open-street-map",
+    margin={"r": 0, "t": 0, "l": 0, "b": 0},
+)
+
+st.plotly_chart(fig_map, use_container_width=True)
+
+
+# ─────────────────────────────────────────────
+#   TABLE
+# ─────────────────────────────────────────────
+st.subheader("📄 Datatabell")
+st.dataframe(data.sort_values(["city", "date"]).reset_index(drop=True))
+
+
+# ─────────────────────────────────────────────
+#   INSIGHTS
+# ─────────────────────────────────────────────
+st.subheader("🧠 Innsikt per by")
+
+ins_lines = []
+for city, dfc in data.groupby("city"):
+    warmest = dfc.loc[dfc["tmax"].idxmax()]
+    coldest = dfc.loc[dfc["tmin"].idxmin()]
+
+    msg = (
+        f"• **{city}** → "
+        f"Varmest: **{warmest['tmax']}°C ({warmest['date']})**, "
+        f"Kaldest: **{coldest['tmin']}°C ({coldest['date']})**"
+    )
+
+    if "precip_mm" in dfc.columns:
+        wettest = dfc.loc[dfc["precip_mm"].idxmax()]
+        msg += f", Mest nedbør: **{wettest['precip_mm']} mm ({wettest['date']})**"
+
+    if "wind_max" in dfc.columns:
+        w = dfc.loc[dfc["wind_max"].idxmax()]
+        msg += f", Mest vind: **{w['wind_max']} m/s ({w['date']})**"
+
+    ins_lines.append(msg)
+
+st.markdown("\n".join(ins_lines))
+
+st.caption("Kilder: Open-Meteo Weather Forecast API og Geocoding API.")
